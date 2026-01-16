@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Short wrapper so you can type: ./run long --top 120
+python3 whaletraderbot.py "$@"

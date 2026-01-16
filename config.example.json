@@ -1,0 +1,69 @@
+{
+  "scan": {
+    "side_default": "LONG",
+    "min_volume_usdt": 20000000,
+    "max_spread_pct": 0.2,
+    "watchlist_k": 10,
+    "min_watch_score": 60
+  },
+  "whales": {
+    "enabled": true,
+    "assets": ["BTC", "ETH"],
+    "addresses": [
+      "0x9eec98d048d06d9cd75318fffa3f3960e081daab",
+      "0xb317d2bc2d3d2df5fa441b5bae0ab9d8b07283ae",
+      "0xffbd3e51ae0e2c4407434e157965c064f2a11628",
+      "0x88b2448328f4335ad2a8cac06485c378ebe66fe3",
+      "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "0xa5b0edf6b55128e0ddae8e51ac538c3188401d41",
+      "0xe3b6e3443c8f2080704e7421bad9340f13950acb"
+    ],
+    "interval_sec": 300,
+    "api": {
+      "base_url": "https://api.hyperliquid.xyz"
+    },
+    "scoring": {
+      "w": {
+        "net_exposure": 40,
+        "flip": 25,
+        "concentration": 15,
+        "pnl_quality": 20
+      },
+      "thresholds": {
+        "net_exposure_change_1h_strong": 1.8,
+        "flip_strong": 0.3,
+        "concentration_strong": 0.6
+      }
+    }
+  },
+  "plutus": {
+    "enabled": false,
+    "base_url": "http://localhost:11434",
+    "models": ["qwen2.5:14b"],
+    "temperature": 0.2,
+    "timeout_sec": 300,
+    "max_retries": 2,
+    "max_candidates": 10,
+    "require_nonempty": true,
+    "save_raw": false
+  },
+  "scoring": {
+    "max_penalty_abs": 10,
+    "weights": {
+      "tradeability": 35,
+      "setup_quality": 25,
+      "derivatives": 20,
+      "orderflow": 10,
+      "context": 5,
+      "whales": 5
+    },
+    "late": {
+      "ok_atr": 0.15,
+      "watch_atr": 0.25
+    },
+    "late_penalty": -4,
+    "btc_bear_headwind_penalty": -6,
+    "whales_conflict_penalty": -4,
+    "min_score_bypass": 60
+  }
+}

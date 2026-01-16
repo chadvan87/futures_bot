@@ -1,0 +1,73 @@
+You are Claude Code (senior Python engineer + crypto-perp trading systems reviewer).
+
+TASK: Audit and harden the WhaleTraderBot v2.3 codebase (ALGO-ONLY). Your job is to:
+1) Verify the program runs end-to-end (no missing imports, no dead code paths, no NameError/TypeError).
+2) Verify the trading logic matches the intended strategy spec below.
+3) Find logical bugs (wrong formula, wrong thresholds, mislabeled setup_type, wrong scoring weights, etc.).
+4) Fix issues directly in code, keep changes minimal but correct.
+5) Produce a short CHANGELOG of what you changed and why.
+
+IMPORTANT RULES
+- Do not invent data or new features not present in spec.
+- Prefer deterministic, testable logic.
+- If you change constants/thresholds, explain and keep them configurable.
+- Keep outputs backward compatible: JSON schema fields should not disappear.
+
+REPO STRUCTURE
+- whaletraderbot.py: CLI entrypoint.
+- wtb/ : core modules (fetching, indicators, algo plan, pipeline scoring, whales/on-chain).
+- config.example.json: override config sample.
+
+STRATEGY SPEC (must match)
+A) Philosophy: trade market inefficiency/imbalance. Only act after overreaction (sweep / liquidation / FOMO) and reclaim/retest. No chasing.
+B) Data layers (ALGO-only):
+   1) STRUCTURE: range edges, sweep+reclaim, breakout+retest, trend structure.
+   2) VOLATILITY: ATR% and displacement (late_atr rule).
+   3) DERIVATIVES: funding & OI (neutral better; extremes warn).
+   4) ORDERFLOW: simple delta / CVD slope.
+   5) BREATH: BTC regime + risk-on/off gauge.
+   6) WHALES/ONCHAIN (LIGHT): Hyperliquid whale addresses for BTC/ETH context only (boost/deny signals). Weight=5 in scoring.
+C) Setup types (labeling + plan logic):
+   - RANGE_SWEEP_RECLAIM
+   - BREAKOUT_RETEST
+   - TREND_PULLBACK
+   - VOLATILITY_FADE
+   Setup typing MUST NOT always return TREND_PULLBACK. It should choose based on ADX + range edges + breakout conditions.
+D) Scoring:
+   - Must compute component scores (tradeability, setup_quality, derivatives, orderflow, context, whales).
+   - Must allow config weights.
+   - Penalties exist (late entry, BTC bearish headwind, whale conflict) BUT total penalty magnitude must be capped (max_penalty_abs, default 10).
+   - User asked: "(A) nhẹ: weight 5, penalty tối đa 10" => whales weight 5; total penalties capped at 10.
+E) Outputs:
+   - Print ranked WATCHLIST and generate a ChatGPT advisory prompt file.
+   - Cornix-ready messages for EXECUTE trades only.
+   - If data missing/inconsistent => SKIP.
+
+WHAT TO CHECK (CONCRETE)
+1) Static checks:
+   - Run `python -m py_compile` on all .py files.
+   - Search for undefined names, wrong function signatures, or mismatched parameters.
+2) Deterministic setup_type:
+   - Confirm `choose_setup_type(...)` receives the right arguments and can output all 4 types.
+   - Add a small unit-test-like snippet (or quick check function) that feeds synthetic arrays to ensure each type can be produced.
+3) Late rule:
+   - Ensure `late_atr` is computed correctly: distance from current_price to entry_zone in ATR units.
+   - Ensure thresholds map to WATCH/OK as intended.
+4) Scoring & penalties:
+   - Confirm weights normalize to 100.
+   - Confirm penalties are capped by `max_penalty_abs`.
+   - Confirm final_score is clamped 0-100.
+5) Whales integration:
+   - Confirm whale module calls Hyperliquid /info safely (timeouts, rate limiting backoff).
+   - Confirm whales are used as context (BTC/ETH) and do not attempt to trade alts directly.
+   - Confirm whale conflict penalty triggers when whale bias opposes side_mode.
+6) CLI:
+   - Confirm commands in README work:
+     - `./run scan --side LONG --out out/`
+     - `python whaletraderbot.py scan --side LONG --out out/`
+   - Confirm outputs are written (JSON + prompt text + cornix messages).
+
+DELIVERABLES
+- Updated code (commit-style).
+- CHANGELOG.md (or append to README) listing fixes.
+- If you add tests, keep them in `wtb/tests_smoke.py` and make them optional.
