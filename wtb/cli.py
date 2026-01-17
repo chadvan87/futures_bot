@@ -6,8 +6,9 @@ import pathlib
 import sys
 
 from .pipeline import run_pipeline
+from .manual import run_manual_pipeline
 from .config import load_config
-from .binance import BinanceFuturesClient
+from .binance import BinanceFuturesClient, parse_symbols_input
 from .backtest import cache_klines
 
 
@@ -36,10 +37,16 @@ def build_parser() -> argparse.ArgumentParser:
     shortp.add_argument("--print-prompt", action="store_true")
     add_scan_overrides(shortp)
 
-    manual = sub.add_parser("manual", help="Build a single-symbol packet")
-    manual.add_argument("symbol", help="e.g. ETHUSDT or ETH/USDT")
-    manual.add_argument("--side", choices=["LONG", "SHORT"], default=None)
-    manual.add_argument("--print-prompt", action="store_true")
+    # New manual mode with multi-symbol support
+    manual = sub.add_parser("manual", help="Analyze specific symbols (same pipeline as scan)")
+    manual.add_argument("--symbols", "-s", type=str, default=None,
+                       help='Comma-separated symbols, e.g. "ETH,BTC,PEPE" or "ETHUSDT,BTCUSDT"')
+    manual.add_argument("--symbols-file", "-f", type=str, default=None,
+                       help="Path to file with symbols (one per line, # for comments)")
+    manual.add_argument("--side", choices=["LONG", "SHORT"], default=None,
+                       help="Override side mode")
+    manual.add_argument("--print-prompt", action="store_true",
+                       help="Print ChatGPT prompt to stdout")
     add_scan_overrides(manual)
 
     cache = sub.add_parser("cache", help="Cache klines for offline backtest")
@@ -67,18 +74,34 @@ def main(argv: list[str] | None = None) -> int:
         if getattr(args, "min_score", None) is not None:
             scan_cfg["min_watch_score"] = int(args.min_score)
 
-    if args.cmd in ("scan", "long", "short", "manual"):
+    if args.cmd in ("scan", "long", "short"):
         if args.cmd == "scan":
             side = args.side or cfg.get("scan", {}).get("side_default", "LONG")
         elif args.cmd == "long":
             side = "LONG"
-        elif args.cmd == "short":
+        else:  # short
             side = "SHORT"
-        else:
-            side = args.side or cfg.get("scan", {}).get("side_default", "LONG")
 
-        symbol = getattr(args, "symbol", None)
-        result = run_pipeline(cfg, side_mode=side, manual_symbol=symbol, print_prompt=bool(getattr(args, "print_prompt", False)))
+        result = run_pipeline(cfg, side_mode=side, print_prompt=bool(getattr(args, "print_prompt", False)))
+        if result is None:
+            return 2
+        return 0
+
+    if args.cmd == "manual":
+        side = args.side or cfg.get("scan", {}).get("side_default", "LONG")
+
+        # Parse symbols from --symbols argument
+        symbols = None
+        if args.symbols:
+            symbols = parse_symbols_input(args.symbols)
+
+        result = run_manual_pipeline(
+            cfg,
+            side_mode=side,
+            symbols=symbols,
+            symbols_file=args.symbols_file,
+            print_prompt=bool(getattr(args, "print_prompt", False)),
+        )
         if result is None:
             return 2
         return 0

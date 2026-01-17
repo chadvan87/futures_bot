@@ -59,6 +59,79 @@ Shortcut commands:
 ./run short   # Same as: scan --side SHORT
 ```
 
+## Manual Mode
+
+Manual mode lets you analyze specific symbols instead of scanning the entire market. It runs the **exact same pipeline** as scan mode (BTC regime, breath, derivatives, orderflow, scoring) but on your chosen symbols.
+
+### Usage
+
+**Analyze specific symbols:**
+
+```bash
+# Using comma-separated list
+python whaletraderbot.py manual --symbols "ETH,BTC,PEPE"
+
+# Or with full symbol names
+python whaletraderbot.py manual -s "ETHUSDT,BTCUSDT,1000PEPEUSDT"
+
+# With side override
+python whaletraderbot.py manual --symbols "SOL,DOGE" --side SHORT
+```
+
+**Using a symbols file:**
+
+```bash
+python whaletraderbot.py manual --symbols-file watchlist.txt
+```
+
+Example `watchlist.txt`:
+```
+# My watchlist
+ETH
+BTC
+SOL
+PEPE  # meme coin
+DOGE
+```
+
+### Symbol Normalization
+
+Manual mode automatically normalizes your input:
+
+- **Uppercase**: `eth` → `ETHUSDT`
+- **Add USDT suffix**: `BTC` → `BTCUSDT`
+- **Remove separators**: `ETH/USDT` → `ETHUSDT`
+- **1000x variants**: `PEPE` → `1000PEPEUSDT` (auto-resolved via Binance API)
+
+### Validation
+
+- Symbols are validated against Binance USDT-M perpetual contracts
+- Invalid symbols are skipped with an error message
+- Warnings are shown when symbols are auto-resolved (e.g., PEPE → 1000PEPEUSDT)
+
+### Output
+
+Manual mode generates the same outputs as scan mode in `outputs/latest/`:
+
+- `payload.json` - Full analysis data (includes `mode: "manual"`)
+- `watchlist.txt` - Human-readable watchlist
+- `chatgpt_prompt.txt` - Ready for ChatGPT review
+
+### Config
+
+You can set default symbols in `config.json`:
+
+```json
+{
+  "manual": {
+    "enabled": true,
+    "default_symbols": ["BTCUSDT", "ETHUSDT"]
+  }
+}
+```
+
+If no `--symbols` or `--symbols-file` is provided, these defaults are used.
+
 ## Outputs
 
 After a scan, you get (default output dir: `outputs/latest/`):

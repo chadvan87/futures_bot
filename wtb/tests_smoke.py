@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 from .algo import choose_setup_type
+from .binance import normalize_symbol, resolve_symbol
 
 
 def test_setup_type_determinism():
@@ -151,6 +152,81 @@ def test_penalty_capping():
     print("All penalty capping tests passed!")
 
 
+def test_symbol_normalization():
+    """Verify symbol normalization logic for Manual Mode."""
+    print("Testing symbol normalization...")
+
+    # Test 1: Lowercase to uppercase with USDT append
+    result = normalize_symbol("eth")
+    assert result == "ETHUSDT", f"Expected ETHUSDT, got {result}"
+    print(f"  ✓ 'eth' -> '{result}'")
+
+    # Test 2: Already has USDT
+    result = normalize_symbol("ETHUSDT")
+    assert result == "ETHUSDT", f"Expected ETHUSDT, got {result}"
+    print(f"  ✓ 'ETHUSDT' -> '{result}'")
+
+    # Test 3: With slash separator
+    result = normalize_symbol("btc/usdt")
+    assert result == "BTCUSDT", f"Expected BTCUSDT, got {result}"
+    print(f"  ✓ 'btc/usdt' -> '{result}'")
+
+    # Test 4: With dash separator
+    result = normalize_symbol("SOL-USDT")
+    assert result == "SOLUSDT", f"Expected SOLUSDT, got {result}"
+    print(f"  ✓ 'SOL-USDT' -> '{result}'")
+
+    # Test 5: With whitespace
+    result = normalize_symbol("  pepe  ")
+    assert result == "PEPEUSDT", f"Expected PEPEUSDT, got {result}"
+    print(f"  ✓ '  pepe  ' -> '{result}'")
+
+    # Test 6: Mixed case
+    result = normalize_symbol("DoGe")
+    assert result == "DOGEUSDT", f"Expected DOGEUSDT, got {result}"
+    print(f"  ✓ 'DoGe' -> '{result}'")
+
+    print("All symbol normalization tests passed!")
+
+
+def test_symbol_resolution():
+    """Verify symbol resolution logic for Manual Mode."""
+    print("Testing symbol resolution...")
+
+    # Mock valid symbols (simulating Binance exchange info)
+    valid_symbols = {
+        "BTCUSDT": {"symbol": "BTCUSDT", "baseAsset": "BTC"},
+        "ETHUSDT": {"symbol": "ETHUSDT", "baseAsset": "ETH"},
+        "1000PEPEUSDT": {"symbol": "1000PEPEUSDT", "baseAsset": "1000PEPE"},
+        "SOLUSDT": {"symbol": "SOLUSDT", "baseAsset": "SOL"},
+        "1000SHIBUSDT": {"symbol": "1000SHIBUSDT", "baseAsset": "1000SHIB"},
+    }
+
+    # Test 1: Direct match
+    resolved, warning = resolve_symbol("BTCUSDT", valid_symbols)
+    assert resolved == "BTCUSDT", f"Expected BTCUSDT, got {resolved}"
+    assert warning is None, f"Expected no warning, got {warning}"
+    print(f"  ✓ 'BTCUSDT' -> '{resolved}' (no warning)")
+
+    # Test 2: 1000x variant resolution (PEPE -> 1000PEPEUSDT)
+    resolved, warning = resolve_symbol("PEPEUSDT", valid_symbols)
+    assert resolved == "1000PEPEUSDT", f"Expected 1000PEPEUSDT, got {resolved}"
+    assert warning is not None, f"Expected warning, got None"
+    print(f"  ✓ 'PEPEUSDT' -> '{resolved}' (warning: {warning})")
+
+    # Test 3: Symbol not found
+    resolved, warning = resolve_symbol("XYZUSDT", valid_symbols)
+    assert resolved is None, f"Expected None, got {resolved}"
+    print(f"  ✓ 'XYZUSDT' -> None (not found)")
+
+    # Test 4: SHIB -> 1000SHIBUSDT
+    resolved, warning = resolve_symbol("SHIBUSDT", valid_symbols)
+    assert resolved == "1000SHIBUSDT", f"Expected 1000SHIBUSDT, got {resolved}"
+    print(f"  ✓ 'SHIBUSDT' -> '{resolved}'")
+
+    print("All symbol resolution tests passed!")
+
+
 def main():
     """Run all smoke tests."""
     print("=" * 60)
@@ -163,6 +239,10 @@ def main():
     test_late_atr_calculation()
     print()
     test_penalty_capping()
+    print()
+    test_symbol_normalization()
+    print()
+    test_symbol_resolution()
     print()
 
     print("=" * 60)

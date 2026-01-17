@@ -65,5 +65,9 @@
     "btc_bear_headwind_penalty": -6,
     "whales_conflict_penalty": -4,
     "min_score_bypass": 60
+  },
+  "manual": {
+    "enabled": true,
+    "default_symbols": ["BTCUSDT", "ETHUSDT"]
   }
 }

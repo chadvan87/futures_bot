@@ -122,6 +122,10 @@ def default_config() -> Dict[str, Any]:
             "regime_penalty": 0.0,
             "breath_penalty": 0.0,
         },
+        "manual": {
+            "enabled": True,
+            "default_symbols": ["BTCUSDT", "ETHUSDT"],
+        },
     }
 
 
