@@ -59,8 +59,13 @@ class BinanceFuturesClient:
     def book_ticker(self) -> List[Dict[str, Any]]:
         return self._get("/fapi/v1/ticker/bookTicker")
 
-    def klines(self, symbol: str, interval: str, limit: int = 500) -> List[List[Any]]:
-        return self._get("/fapi/v1/klines", {"symbol": symbol, "interval": interval, "limit": limit})
+    def klines(self, symbol: str, interval: str, limit: int = 500, start_ms: Optional[int] = None, end_ms: Optional[int] = None) -> List[List[Any]]:
+        params: Dict[str, Any] = {"symbol": symbol, "interval": interval, "limit": limit}
+        if start_ms is not None:
+            params["startTime"] = int(start_ms)
+        if end_ms is not None:
+            params["endTime"] = int(end_ms)
+        return self._get("/fapi/v1/klines", params)
 
     def premium_index(self, symbol: Optional[str] = None) -> Any:
         params = {"symbol": symbol} if symbol else None

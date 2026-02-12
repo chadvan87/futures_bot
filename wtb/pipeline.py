@@ -493,8 +493,8 @@ def _default_confirm(plan: Dict[str, Any]) -> List[str]:
     return base[:4]
 
 
-def _final_score(plan: Dict[str, Any], cfg: Dict[str, Any]) -> float:
-    return float(_score_breakdown(plan, cfg)[0])
+def _final_score(plan: Dict[str, Any], btc_regime, breath, cfg: Dict[str, Any]) -> float:
+    return float(_score_breakdown(plan, btc_regime, breath, cfg)[0])
 
 
 

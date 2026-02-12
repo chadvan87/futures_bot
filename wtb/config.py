@@ -126,6 +126,33 @@ def default_config() -> Dict[str, Any]:
             "enabled": True,
             "default_symbols": ["BTCUSDT", "ETHUSDT"],
         },
+        "dca": {
+            "side_default": "LONG",
+            "scan_top": 180,
+            "watchlist_k": 15,
+            "min_dca_score": 55,
+            "explore_quota": 0.2,
+            "timeframe": "4h",
+            "tiers": {
+                "core": {"min_volume_usdt": 500_000_000, "max_spread_pct": 0.08},
+                "mid": {"min_volume_usdt": 100_000_000, "max_spread_pct": 0.15},
+                "explore": {"min_volume_usdt": 25_000_000, "max_spread_pct": 0.30},
+            },
+            "weights": {
+                "microstructure": 30,
+                "mean_reversion": 25,
+                "volatility_fit": 20,
+                "derivatives_health": 15,
+                "context": 10,
+            },
+            "penalties": {
+                "btc_headwind": 6,
+                "extreme_funding": 4,
+                "liquidity_stress": 4,
+                "trend_runaway": 5,
+                "max_total": 15,
+            },
+        },
     }
 
 

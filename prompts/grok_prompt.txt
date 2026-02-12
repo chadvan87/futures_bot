@@ -9,7 +9,7 @@ to decide whether it is SAFE or RISKY to trade them right now.
 
 COINS TO ANALYZE:
 [PASTE COIN SYMBOLS HERE]
-(e.g. ZECUSDT, XRPUSDT, BCHUSDT)
+XRP
 
 ================================================
 CORE RULES (NON-NEGOTIABLE)
